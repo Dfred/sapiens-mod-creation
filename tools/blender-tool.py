@@ -77,6 +77,7 @@ def import_mats(fb_operator):
     mats_lua = Path(fb_operator.filepath).read_text()
     mats_importer.set_cwd()
     materials = mats_importer.get_lua_materials(mats_lua)
+    bMat_type = type(bpy.data.materials.new('delete_me'))
 
     ## now create the mats
     for mat_name, mat_def in materials.items():
@@ -88,7 +89,14 @@ def import_mats(fb_operator):
         else:
             mat = bpy.data.materials.new(mat_name)
         # edit material
-        mat.diffuse_color = mat_def['color']+[1] # adding alpha channel
+        if hasattr(mat, 'diffuse_color')    and 'color' in mat_def:
+            for i, c in enumerate(mat_def['color']):
+                mat.diffuse_color[i] = c
+        if hasattr(mat, 'metallic')         and 'metal' in mat_def:
+            mat.metallic = mat_def['metal']
+        if hasattr(mat, 'roughness')        and 'roughness' in mat_def:
+            mat.roughness = mat_def['roughness']
+        
 
 ## Create 2 FileBrowser operators to locate our files   #TDL: find a more elegant way to do this?
 Sapiens_OT_Open_FilebrowserImport = new_FileBrowserClass(
