@@ -105,14 +105,15 @@ def import_mats(fb_operator):
     bMat_type = type(bpy.data.materials.new('delete_me'))
 
     ## now create the mats
-    result = {'OK': 0, 'KO': 0, 'NOP': 0}
+    result = {'OK': 0, 'NOP': 0}
+    failed_mats = []
     for mat_name, mat_def in materials.items():
         if mat_name in bpy.data.materials:
             if not fb_operator.override:
                 result['NOP'] += 1
                 continue
             else:
-                mat = materials[mat_name]
+                mat = bpy.data.materials[mat_name]
         else:
             mat = bpy.data.materials.new(mat_name)
         # edit material
@@ -127,10 +128,15 @@ def import_mats(fb_operator):
         if hasattr(mat, 'roughness')        and 'roughness' in mat_def:
             mat.roughness = mat_def['roughness']
             edited = True
-        result['OK' if edited else 'KO'] += 1
-        if not edited:
+
+        if edited:
+            result['OK'] += 1
+        else:
+            failed_mats.append(mat_name)
             console_write(f"\tmat: {dir(mat)}\n\tmat_def: {dir(mat_def)}")
-    show_msg(f"import done. Result: {result['OK']} imported, {result['KO']} failed, {result['NOP']} ignored")
+    failed_str = f" for {', '.join(failed_mats)}." if len(failed_mats) > 0 else None
+    show_msg(f"import done. Result: {result['OK']} imported, {result['NOP']} ignored, "
+        f"and {len(failed_mats)} failed{failed_str if failed_str else ''}.")
 
 
 ## Create 2 FileBrowser operators to locate our files   #TDL: find a more elegant way to do this?
